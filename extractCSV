@@ -1,0 +1,81 @@
+// Set the output directory
+outputDir = getDirectory("Choose a Directory to Save CSV Files");
+
+// Get the current image title
+imageTitle = getTitle();
+
+// Get the dimensions of the image (including number of channels)
+getDimensions(width, height, channels, slices, frames);
+
+// Initialize arrays to store X values and Y values for each channel
+xValues = 0;
+yValuesChannel1 = 0;
+yValuesChannel2 = 0;
+yValuesChannel3 = 0;
+
+// Loop through each channel to collect plot profile data
+for (c = 1; c <= channels; c++) {
+    // Set the active channel
+    Stack.setChannel(c);
+    
+    // Select the entire image as a rectangular ROI
+    makeRectangle(0, 0, width, height);
+    
+    // Generate the plot profile for the current channel
+    run("Plot Profile");
+    
+    // Get the plot profile data
+    Plot.getValues(xValuesTemp, yValues);
+    close();
+    
+    // Store X values (assuming they are the same for all channels)
+    if (c == 1) {
+        xValues = xValuesTemp;
+    }
+    
+    // Store Y values for the current channel
+    if (c == 1) {
+        yValuesChannel1 = yValues;
+    } else if (c == 2) {
+        yValuesChannel2 = yValues;
+    } else if (c == 3) {
+        yValuesChannel3 = yValues;
+    }
+    
+    
+}
+
+// Create a filename for the CSV output
+csvFileName = outputDir + imageTitle + "_Combined_Profile.csv";
+
+// Open the file to write the CSV data
+file = File.open(csvFileName);
+
+ //Check if the file was created successfully
+if (File.exists(csvFileName)) {
+    // Write the header
+    header = "X, DAPI, Green, Test";
+    print(file, header + "\n");
+    
+    // Determine the number of data points
+    dataLength = xValues.length;
+    a = d2s(yValuesChannel1[2],3);
+    // Write the data to the CSV file
+    for (i = 0; i < dataLength; i++) 
+    {
+        line = d2s(xValues[i],0) + ", " + d2s(yValuesChannel1[i],3) + ", " + d2s(yValuesChannel2[i],3) + ", " + d2s(yValuesChannel3[i],3);
+        print(file, line + "\n");       
+   }
+    
+    // Close the file
+    File.close(file);
+    
+    // Notify the user that the process is complete
+    print(imageTitle + "CSV file has been saved successfully.");
+
+}
+
+else 
+    // Notify the user if the file could not be created
+   print("Error: Could not create file " + csvFileName);
+
